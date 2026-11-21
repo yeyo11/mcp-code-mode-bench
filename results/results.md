@@ -8,13 +8,35 @@ cold and warm runs are never mixed in one row. Cost for modes A-C comes from the
 `bench/src/prices.ts`; `*` marks Claude Code's own client-side estimate (`total_cost_usd`), which on a
 subscription is not money spent.
 
-_No benchmark runs yet._
+| Task | Mode | Model | Cache | Runs | Correct | Input tokens (all) | of which cache reads | Output tokens | Requests | Wall time | Cost |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| T1 | A. Classic (API) | claude-sonnet-5-5 | warm | 5 | 5/5 | 77,385 (77,382–77,415) | 10,771 (10,771–10,771) | 11,306 (10,240–12,550) | 3 (3–3) | 79.0 s (73.6 s–85.1 s) | $0.2807 ($0.2701–$0.2932) |
+| T1 | B. Classic + tool search (API) | claude-sonnet-5-5 | warm | 5 | 5/5 | 79,907 (77,638–79,919) | 10,978 (10,978–10,978) | 10,951 (10,775–12,500) | 3 (3–3) | 75.0 s (74.7 s–85.7 s) | $0.2829 ($0.2761–$0.2929) |
+| T1 | C. Programmatic tool calling (API) | claude-sonnet-5-5 | warm | 5 | 5/5 | 44,025 (43,940–57,514) | 36,488 (36,469–49,738) | 3,757 (3,669–3,810) | 24 (23–25) | 57.1 s (55.7 s–59.2 s) | $0.0603 ($0.0590–$0.0620) |
+| T2 | A. Classic (API) | claude-sonnet-5-5 | warm | 5 | 5/5 | 17,090 (17,057–17,097) | 12,211 (12,211–12,211) | 475 (447–573) | 4 (4–4) | 7.4 s (7.0 s–8.0 s) | $0.0182 ($0.0178–$0.0191) |
+| T2 | B. Classic + tool search (API) | claude-sonnet-5-5 | warm | 5 | 5/5 | 11,238 (11,238–11,238) | 11,230 (11,230–11,230) | 508 (347–552) | 3 (3–3) | 6.8 s (6.0 s–7.4 s) | $0.0062 ($0.0046–$0.0067) |
+| T2 | C. Programmatic tool calling (API) | claude-sonnet-5-5 | warm | 5 | 5/5 | 32,605 (32,239–32,625) | 31,063 (30,875–31,156) | 556 (531–561) | 4 (4–4) | 13.5 s (10.9 s–13.9 s) | $0.0124 ($0.0118–$0.0126) |
+| T3 | A. Classic (API) | claude-sonnet-5-5 | warm | 5 | 5/5 | 117,600 (117,600–158,842) | 117,592 (117,592–153,987) | 396 (375–450) | 3 (3–4) | 5.4 s (4.9 s–6.9 s) | $0.0157 ($0.0155–$0.0367) |
+| T3 | B. Classic + tool search (API) | claude-sonnet-5-5 | warm | 5 | 5/5 | 11,238 (11,238–11,238) | 11,230 (11,230–11,230) | 353 (342–551) | 3 (3–3) | 6.0 s (5.8 s–6.9 s) | $0.0047 ($0.0046–$0.0066) |
+| T3 | C. Programmatic tool calling (API) | claude-sonnet-5-5 | warm | 5 | 5/5 | 161,447 (116,418–199,617) | 156,038 (115,932–197,123) | 508 (406–556) | 4 (3–5) | 13.4 s (10.2 s–14.9 s) | $0.0292 ($0.0163–$0.0342) |
 
 ## Smoke runs (plumbing checks, not results)
 
 | Task | Mode | Model | Cache | Runs | Correct | Input tokens (all) | of which cache reads | Output tokens | Requests | Wall time | Cost |
 |---|---|---|---|---|---|---|---|---|---|---|---|
+| T1 | A. Classic (API) | claude-sonnet-5-5 | cold | 1 | 1/1 | 77,383 | 6,431 | 11,025 | 3 | 79.6 s | $0.2883 |
+| T1 | B. Classic + tool search (API) | claude-sonnet-5-5 | cold | 1 | 1/1 | 77,618 | 6,060 | 10,531 | 3 | 75.4 s | $0.2848 |
+| T1 | C. Programmatic tool calling (API) | claude-sonnet-5-5 | cold | 1 | 1/1 | 69,171 | 52,990 | 3,739 | 24 | 60.2 s | $0.0831 |
+| T2 | A. Classic (API) | claude-haiku-5-5 | cold | 1 | 1/1 | 11,326 | 4,094 | 437 | 3 | 3.4 s | $0.0012 |
+| T2 | A. Classic (API) | claude-sonnet-5-5 | cold | 1 | 1/1 | 17,064 | 8,138 | 535 | 4 | 7.5 s | $0.0285 |
+| T2 | B. Classic + tool search (API) | claude-haiku-5-5 | cold | 1 | 1/1 | 11,378 | 3,785 | 692 | 3 | 3.9 s | $0.0013 |
+| T2 | B. Classic + tool search (API) | claude-sonnet-5-5 | cold | 1 | 1/1 | 11,238 | 3,715 | 362 | 3 | 5.8 s | $0.0228 |
+| T2 | C. Programmatic tool calling (API) | claude-haiku-5-5 | cold | 1 | 1/1 | 43,970 | 31,024 | 1,090 | 5 | 13.9 s | $0.0025 |
+| T2 | C. Programmatic tool calling (API) | claude-sonnet-5-5 | cold | 1 | 1/1 | 25,381 | 18,515 | 496 | 4 | 12.1 s | $0.0240 |
 | T2 | D. Claude Code, classic | claude-sonnet-5-5 | warm | 1 | 1/1 | 30,054 | 20,522 | 503 | 4 | 8.5 s | $0.0452 * |
+| T3 | A. Classic (API) | claude-sonnet-5-5 | cold | 1 | 1/1 | 117,600 | 74,953 | 379 | 3 | 5.8 s | $0.1179 |
+| T3 | B. Classic + tool search (API) | claude-sonnet-5-5 | warm | 1 | 1/1 | 11,238 | 4,970 | 353 | 3 | 5.8 s | $0.0197 |
+| T3 | C. Programmatic tool calling (API) | claude-sonnet-5-5 | cold | 1 | 1/1 | 116,647 | 77,360 | 399 | 3 | 10.3 s | $0.1099 |
 
 ## Invalid runs (left out of every table)
 
