@@ -14,7 +14,7 @@ test("D and E command lines differ only in Code Mode", () => {
   }
   assert.equal(d.env.CLAUDE_CODE_EXPERIMENTAL_CODE_MODE, "0");
   assert.equal(e.env.CLAUDE_CODE_EXPERIMENTAL_CODE_MODE, "1");
-  assert.equal(d.args[d.args.indexOf("--tools") + 1], "");
+  assert.equal(d.args[d.args.indexOf("--tools") + 1], "ToolSearch");
   assert.equal(e.args[e.args.indexOf("--tools") + 1], "REPL");
   assert.ok(!d.args.includes("--settings"));
   assert.deepEqual(JSON.parse(e.args[e.args.indexOf("--settings") + 1]!), { env: { CLAUDE_CODE_EXPERIMENTAL_CODE_MODE: "1" } });

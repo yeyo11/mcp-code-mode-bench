@@ -186,7 +186,8 @@ async function sessionCommand(argv: string[]): Promise<void> {
   writeFileSync(config, JSON.stringify(mcpConfig(task.padding)));
   writeFileSync(prompt, task.prompt);
   const env = mode === "E" ? "CLAUDE_CODE_EXPERIMENTAL_CODE_MODE=1" : "CLAUDE_CODE_EXPERIMENTAL_CODE_MODE=0";
-  const tools = mode === "E" ? "REPL" : '""';
+  // D keeps ToolSearch: interactive sessions defer MCP tools behind it, so without it D sees no tools.
+  const tools = mode === "E" ? "REPL" : "ToolSearch";
   console.log(
     // The prompt goes first: --tools and --allowedTools take lists and would swallow a trailing argument.
     `cd ${SESSION_DIR} && ${env} claude "$(cat ${prompt})" --strict-mcp-config --mcp-config ${config} ` +

@@ -43,7 +43,8 @@ export function mcpConfig(padding: number): object {
  *   does not appear, with the variable in the shell or in `--settings`, so mode E under `-p` is refused
  *   by `runClaudeCodeTask` as soon as the init event lists no REPL. Measure E from an interactive
  *   session's transcript instead (see docs/claude-code-code-mode.md and bench/src/transcript.ts).
- * - `--tools` must name REPL (the tool that runs Code Mode's JavaScript); D gets no built-in tools at all.
+ * - `--tools` must name REPL (the tool that runs Code Mode's JavaScript); D gets only ToolSearch, since
+ *   Claude Code may defer MCP tools behind it (it does in interactive sessions) and `""` would hide them.
  */
 export function buildClaudeArgs(opts: Pick<CcRunOptions, "mode" | "task" | "model" | "effort">, mcpConfigPath: string): {
   args: string[];
@@ -67,7 +68,7 @@ export function buildClaudeArgs(opts: Pick<CcRunOptions, "mode" | "task" | "mode
     opts.effort,
     "--no-session-persistence",
     "--tools",
-    codeMode ? "REPL" : "",
+    codeMode ? "REPL" : "ToolSearch",
     "--permission-mode",
     "dontAsk",
     "--allowedTools",
