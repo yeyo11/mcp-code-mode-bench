@@ -5,7 +5,7 @@ same MCP server, when it calls the tools one by one, and when it writes code tha
 when does Code Mode **not** pay off?
 
 This repository measures it, with a mock MCP server whose answers are known in advance, so every run
-is graded by code. Write-up: [With Code Mode, my agent made twice the model requests and spent 44% less than without it](https://josegarrido.dev/en/code-mode-twice-the-requests-with-my-mcp-costs-44-percent-less/?utm_source=github&utm_medium=referral&utm_campaign=code-mode-hace-el-doble-de-peticiones-con-mi-mcp-y-cuesta-un-44-menos).
+is graded by code. Write-up: [With Code Mode, my agent makes twice the model requests and spends 44% less than without it](https://josegarrido.dev/en/code-mode-twice-the-model-requests-44-percent-cheaper/?utm_source=github&utm_medium=referral&utm_campaign=code-mode-doble-de-peticiones-44-por-ciento-menos-coste).
 
 ## The three "Code Modes"
 
