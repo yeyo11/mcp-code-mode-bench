@@ -34,7 +34,15 @@ test("stream-json output is parsed into usage, requests, cost and the answer", (
   assert.equal(record.correct, true, record.problems.join("; "));
   assert.equal(record.cache_state, "cold");
   assert.equal(record.cost_source, "claude-code-estimate");
-  assert.equal(record.extra?.code_mode_used, true);
+  assert.equal(record.extra?.repl_calls_visible, 1);
+  assert.equal(record.extra?.first_request_prompt_tokens, 9003);
+});
+
+test("published streams carry no local paths", async () => {
+  const { redactPaths } = await import("../bench/src/claude-code.js");
+  const { homedir } = await import("node:os");
+  const out = redactPaths(`{"cwd":"/tmp/run-1","memory":"${homedir()}/.claude/x"}`, "/tmp/run-1");
+  assert.equal(out, '{"cwd":"<run-dir>","memory":"~/.claude/x"}');
 });
 
 test("a run with no result line is an error, not a pass", () => {

@@ -128,7 +128,6 @@ async function claudeCode(argv: string[]): Promise<void> {
       smoke: { type: "boolean", default: false },
       batch: { type: "string" },
       claude: { type: "string", default: "claude" },
-      "keep-stdout": { type: "boolean", default: false },
     },
   });
   const modes = list(values.mode, ["D", "E"] as const, "mode");
@@ -139,7 +138,7 @@ async function claudeCode(argv: string[]): Promise<void> {
   for (let rep = 1; rep <= Number(values.reps); rep++) {
     for (const id of taskIds) {
       for (const mode of modes) {
-        const { record, stdout } = await runClaudeCodeTask({
+        const { record } = await runClaudeCodeTask({
           mode: mode as CcMode,
           task: tasks[id],
           rep,
@@ -149,9 +148,11 @@ async function claudeCode(argv: string[]): Promise<void> {
           smoke: values.smoke,
           claudeBin: values.claude,
         });
-        if (values["keep-stdout"]) record.extra = { ...record.extra, stream_json: stdout };
         file = writeRecord(record);
-        const cm = mode === "E" ? ` · Code Mode used: ${record.extra?.code_mode_used ? "yes" : "NO"}` : "";
+        const cm =
+          mode === "E" || mode === "D"
+            ? ` · first request ${String(record.extra?.first_request_prompt_tokens)} prompt tokens · REPL calls visible ${String(record.extra?.repl_calls_visible ?? 0)}`
+            : "";
         console.log(`${summary(record)}${cm}`);
       }
     }

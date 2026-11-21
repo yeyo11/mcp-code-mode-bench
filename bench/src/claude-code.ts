@@ -3,12 +3,12 @@
 // prints, plus the per-message events needed to count requests and see which tools ran.
 
 import { spawn } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import { grade } from "../../tasks/src/checker.js";
 import type { Task } from "../../tasks/src/tasks.js";
-import { SERVER_ENTRY } from "../../shared/paths.js";
+import { RAW_DIR, SERVER_ENTRY } from "../../shared/paths.js";
 import type { RunRecord } from "./record.js";
 import { emptyTotals, type UsageTotals } from "./usage.js";
 
@@ -95,6 +95,8 @@ export interface CcParsed {
   toolsAtInit: string[];
   codeModeNotices: string[];
   firstRequestCacheRead: number | null;
+  /** input + cache writes + cache reads of the first request: shows how big the tool definitions are. */
+  firstRequestPromptTokens: number | null;
   modelUsage: unknown;
 }
 
@@ -164,6 +166,9 @@ export function parseStreamJson(stdout: string): CcParsed {
     toolsAtInit: Array.isArray(init?.tools) ? (init.tools as string[]) : [],
     codeModeNotices: notices,
     firstRequestCacheRead: first ? (first.cache_read_input_tokens ?? 0) : null,
+    firstRequestPromptTokens: first
+      ? (first.input_tokens ?? 0) + (first.cache_creation_input_tokens ?? 0) + (first.cache_read_input_tokens ?? 0)
+      : null,
     modelUsage: modelUsage ?? null,
   };
 }
@@ -201,9 +206,11 @@ export function toRecord(opts: CcRunOptions, parsed: CcParsed, wallMs: number, s
       duration_ms: parsed.durationMs,
       duration_api_ms: parsed.durationApiMs,
       code_mode_requested: opts.mode === "E",
-      // Code Mode counts as used only when Claude actually called REPL in this run.
-      code_mode_used: replCalls > 0,
-      repl_calls: replCalls,
+      // In Code Mode, MCP tools are callable only inside REPL, and the transcript shows the inner tool calls
+      // rather than the code, so a REPL block may never appear in the stream. Visible REPL calls prove Code
+      // Mode ran; their absence proves nothing. Compare first_request_prompt_tokens with mode D as well.
+      repl_calls_visible: replCalls,
+      first_request_prompt_tokens: parsed.firstRequestPromptTokens,
       tools_at_init: parsed.toolsAtInit,
       code_mode_notices: parsed.codeModeNotices,
       model_usage: parsed.modelUsage,
@@ -239,6 +246,22 @@ export async function runClaudeCodeTask(opts: CcRunOptions): Promise<{ record: R
   rmSync(dir, { recursive: true, force: true });
 
   const parsed = parseStreamJson(stdout);
+  const streamFile = saveStream(opts, stdout, dir);
   const error = code === 0 ? null : `claude exited with code ${code}: ${stderr.slice(0, 500)}`;
-  return { record: toRecord(opts, parsed, wallMs, startedAt, error), stdout, stderr };
+  const record = toRecord(opts, parsed, wallMs, startedAt, error);
+  record.extra = { ...record.extra, stream_file: path.relative(path.dirname(RAW_DIR), streamFile) };
+  return { record, stdout, stderr };
+}
+
+/** Local paths (home folder, temp folder) are replaced, so the stream can be published. */
+export function redactPaths(text: string, tempDir: string): string {
+  return text.split(tempDir).join("<run-dir>").split(homedir()).join("~");
+}
+
+function saveStream(opts: CcRunOptions, stdout: string, tempDir: string): string {
+  const dir = path.join(RAW_DIR, "streams");
+  mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, `${opts.batchId}-${opts.mode}-${opts.task.id}-${opts.rep}.jsonl`);
+  writeFileSync(file, redactPaths(stdout, tempDir));
+  return file;
 }

@@ -92,8 +92,8 @@ export function renderReport(records: RunRecord[], now = new Date()): string {
     for (const r of cc) {
       parts.push(
         "",
-        `- ${r.task} mode E, batch \`${r.batch_id}\`: Code Mode used (REPL called) = ${r.extra?.code_mode_used ? "yes" : "no"}, ` +
-          `REPL calls = ${String(r.extra?.repl_calls ?? 0)}.`,
+        `- ${r.task} mode E, batch \`${r.batch_id}\`: REPL calls visible in the stream = ${String(r.extra?.repl_calls_visible ?? 0)}` +
+          (r.extra?.note ? `. ${String(r.extra.note)}` : "."),
       );
     }
   }
