@@ -5,7 +5,7 @@ same MCP server, when it calls the tools one by one, and when it writes code tha
 when does Code Mode **not** pay off?
 
 This repository measures it, with a mock MCP server whose answers are known in advance, so every run
-is graded by code. Write-up: [the article on josegarrido.dev](https://josegarrido.dev/?utm_source=github&utm_medium=referral&utm_campaign=mcp-code-mode-bench-readme).
+is graded by code. Write-up: [Code Mode made twice the requests on my MCP server and cost 44% less](https://josegarrido.dev/en/code-mode-doubles-requests-costs-44-percent-less/?utm_source=github&utm_medium=referral&utm_campaign=code-mode-hace-el-doble-de-peticiones-con-mi-mcp-y-cuesta-un-44-menos).
 
 ## The three "Code Modes"
 
@@ -38,7 +38,7 @@ because with 6 tools the definitions cost little.
 | Task | What | Shape |
 |---|---|---|
 | T1 | In every document, which open comments have had no reply for more than 7 days? Group by document, count per author. | 1 + 20 calls, large results, small answer: Code Mode's case |
-| T2 | How many open comments does the Budget 2027 document have? | One or two calls: the control, where Code Mode should lose |
+| T2 | How many open comments does the Budget 2027 document have? | One or two calls: the control, where Code Mode should not pay off |
 | T3 | T2 with `--padding 200` (206 tools) | What tool definitions alone cost |
 
 Every prompt asks the model to end with a JSON block; the checker grades it by exact set and count
@@ -51,7 +51,7 @@ match.
 | A. Classic | Claude API, own loop | Every tool result goes through the model |
 | B. Classic + tool search | Claude API | `tool_search_tool_bm25_20251119`; every tool `defer_loading: true` except `list_documents` |
 | C. Programmatic tool calling | Claude API | `code_execution_20260120` + `allowed_callers` on every tool |
-| D. Claude Code, classic | `claude -p` | What most people use daily |
+| D. Claude Code, classic | `claude -p`, or an interactive session measured from its transcript | What most people use daily |
 | E. Claude Code, Code Mode | Interactive session with `CLAUDE_CODE_EXPERIMENTAL_CODE_MODE=1`, measured from its transcript | Experimental; does not run under `-p` |
 
 Same model, same effort (`medium`) and same prompt in every mode. Prompt caching (automatic, 5-minute
@@ -98,17 +98,45 @@ default). `--spent` adds what earlier invocations already spent. Other flags: `-
 
 ## Results
 
-_Placeholder: the final runs are not in yet._ The generated table lives in
-[`results/results.md`](results/results.md): median (min–max) per task × mode, cold and warm cache in
-separate rows. The only run so far is a Claude Code smoke test of mode D on T2, listed there apart
-from the results (the mode E smoke run turned out to run without Code Mode and is listed as invalid).
+Run on 2026-11-21 with Sonnet 5.5 at `medium` effort. Every run below answered correctly. Median
+(min–max) per cell; the full generated table, with cold and warm cache in separate rows, is in
+[`results/results.md`](results/results.md), and every run is a line in [`results/raw/`](results/raw/).
+
+**Claude API, 5 repetitions per cell, warm cache:**
+
+| Task | A. One by one | B. Tool search | C. Programmatic tool calling |
+|---|---|---|---|
+| T1: 20 documents, 21 calls | $0.281 · 77k in · 79 s | $0.283 · 80k in · 75 s | **$0.060** · 44k in · 57 s |
+| T2: one document | $0.018 · 7 s | **$0.006** · 7 s | $0.012 · 14 s |
+| T3: one document, 206 tools | $0.016 · 118k in | **$0.005** · 11k in | $0.029 · 161k in |
+
+**Claude Code 2.1.330, interactive sessions, T1, 3 repetitions** (cost is Claude Code's estimate at API
+prices; on a subscription it is quota, not money):
+
+| Mode | Cost | Model requests | Wall time |
+|---|---|---|---|
+| D. Classic | $0.41 | 4 | 85 s |
+| E. Code Mode | **$0.09** | 31 | **38 s** |
+
+What the numbers say:
+
+- **Chained calls whose results only need filtering are Code Mode's case.** T1 is about 4.7× cheaper
+  through the API and about 4.5× in Claude Code. Not because there are fewer requests (there are many
+  more) but because the 20 results stay in a variable of the script instead of the context, and the
+  model writes far fewer output tokens.
+- **One call doesn't pay off.** Programmatic tool calling takes twice as long, and tool search is
+  cheaper.
+- **A large catalogue is not Code Mode's problem to solve.** With 206 tools, every definition is still
+  loaded in mode C; tool search (mode B) is about 3× cheaper. Cloudflare's "search, then execute"
+  works because it combines both ideas.
+- **Tokens are not money.** With a warm cache, the 118k tokens of T3's definitions cost under 2 cents.
 
 ## Caveats
 
 - **Tokens are not money.** Most of what Code Mode saves in a long loop are cache reads, which cost
   5 % of the input price on Sonnet 5.5. A big drop in tokens can be a small drop in dollars; the
   table shows both, and cold and warm cache separately.
-- **T2 is there for Code Mode to lose.** One or two small calls do not repay the code execution
+- **T2 is there for Code Mode not to pay off.** One or two small calls do not repay the code execution
   container and the extra turn to write the script. Anthropic's docs say so ("weak fit"); publishing it
   is part of the point.
 - **Programmatic tool results are not billed** as input tokens on the Claude API ("Only the final code
@@ -128,7 +156,8 @@ from the results (the mode E smoke run turned out to run without Code Mode and i
   [`docs/claude-code-code-mode.md`](docs/claude-code-code-mode.md). A mode E record without a `REPL`
   call is reported as invalid, never as Code Mode.
 - **Claude Code isolation.** Runs use `--strict-mcp-config`, `--setting-sources ""` (no user hooks,
-  plugins or settings), an empty working folder, and only the mock server's tools (plus `REPL` in E).
+  plugins or settings), an empty working folder, and only the mock server's tools, plus `ToolSearch` in
+  D (Claude Code defers MCP tools behind it) and `REPL` in E.
   Claude Code may also trim or spill very large MCP results; that is recorded, not hidden.
 - **Mock latency is zero.** The real server waits on Google's APIs; every extra round trip would cost
   more wall time there than here, in every mode.
