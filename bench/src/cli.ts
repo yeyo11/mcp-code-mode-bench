@@ -5,7 +5,11 @@ import Anthropic from "@anthropic-ai/sdk";
 import { parseArgs } from "node:util";
 import { buildTasks, SYSTEM_PROMPT, TASK_IDS, type Task, type TaskId } from "../../tasks/src/tasks.js";
 import { runApiTask } from "./api-runner.js";
-import { runClaudeCodeTask, type CcMode } from "./claude-code.js";
+import { mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { homedir, tmpdir } from "node:os";
+import path from "node:path";
+import { CodeModeInactiveError, MCP_SERVER_NAME, mcpConfig, runClaudeCodeTask, type CcMode } from "./claude-code.js";
+import { projectDirFor, readTranscript, TranscriptCodeModeError, transcriptToRecord } from "./transcript.js";
 import { connectMockServer } from "./mcp-client.js";
 import { API_MODES, type ApiMode, buildRequest, buildTools, type RequestSettings } from "./modes.js";
 import { newBatchId, writeRecord, type RunRecord } from "./record.js";
@@ -160,6 +164,73 @@ async function claudeCode(argv: string[]): Promise<void> {
   if (file) console.log(`raw results: ${file}`);
 }
 
+/** Fixed, empty working folder for interactive sessions, so their transcripts land in one known place. */
+const SESSION_DIR = path.join(tmpdir(), "mcp-code-mode-bench-session");
+
+/** Prints the interactive command for mode D or E (Code Mode needs an interactive terminal). */
+async function sessionCommand(argv: string[]): Promise<void> {
+  const { values } = parseArgs({
+    args: argv,
+    options: {
+      mode: { type: "string", default: "E" },
+      task: { type: "string", default: "T2" },
+      model: { type: "string", default: DEFAULT_MODEL },
+      effort: { type: "string", default: "medium" },
+    },
+  });
+  const mode = list(values.mode, ["D", "E"] as const, "mode")[0]!;
+  const task = buildTasks()[list(values.task, TASK_IDS, "task")[0]!];
+  mkdirSync(SESSION_DIR, { recursive: true });
+  const config = path.join(SESSION_DIR, `mcp-padding-${task.padding}.json`);
+  const prompt = path.join(SESSION_DIR, `${task.id}.prompt.txt`);
+  writeFileSync(config, JSON.stringify(mcpConfig(task.padding)));
+  writeFileSync(prompt, task.prompt);
+  const env = mode === "E" ? "CLAUDE_CODE_EXPERIMENTAL_CODE_MODE=1" : "CLAUDE_CODE_EXPERIMENTAL_CODE_MODE=0";
+  const tools = mode === "E" ? "REPL" : '""';
+  console.log(
+    // The prompt goes first: --tools and --allowedTools take lists and would swallow a trailing argument.
+    `cd ${SESSION_DIR} && ${env} claude "$(cat ${prompt})" --strict-mcp-config --mcp-config ${config} ` +
+      `--setting-sources "" --model ${values.model} --effort ${values.effort} --tools ${tools} ` +
+      `--allowedTools mcp__${MCP_SERVER_NAME}${mode === "E" ? " REPL" : ""}`,
+  );
+  console.error(`# then: npm run bench -- transcript --latest --mode ${mode} --task ${task.id} --rep <n>`);
+}
+
+/** Turns an interactive session's transcript into a results line. */
+async function transcript(argv: string[]): Promise<void> {
+  const { values } = parseArgs({
+    args: argv,
+    options: {
+      file: { type: "string" },
+      latest: { type: "boolean", default: false },
+      mode: { type: "string", default: "E" },
+      task: { type: "string", default: "T2" },
+      rep: { type: "string", default: "1" },
+      smoke: { type: "boolean", default: false },
+      batch: { type: "string" },
+    },
+  });
+  let file = values.file;
+  if (!file && values.latest) {
+    const dir = projectDirFor(SESSION_DIR, homedir());
+    const newest = readdirSync(dir)
+      .filter((f) => f.endsWith(".jsonl"))
+      .map((f) => path.join(dir, f))
+      .sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs)[0];
+    file = newest;
+  }
+  if (!file) throw new Error("pass --file <transcript.jsonl> or --latest");
+  const mode = list(values.mode, ["D", "E"] as const, "mode")[0]!;
+  const task = buildTasks()[list(values.task, TASK_IDS, "task")[0]!];
+  const record = transcriptToRecord(
+    { file, mode, task, rep: Number(values.rep), batchId: values.batch ?? newBatchId("claude-code-interactive"), smoke: values.smoke },
+    readTranscript(file),
+  );
+  const out = writeRecord(record);
+  console.log(`${summary(record)} · REPL calls ${String(record.extra?.repl_calls_visible)}`);
+  console.log(`raw results: ${out}`);
+}
+
 async function showTasks(): Promise<void> {
   const tasks = buildTasks();
   for (const id of TASK_IDS) console.log(JSON.stringify(tasks[id], null, 2));
@@ -177,15 +248,21 @@ const [command, ...rest] = process.argv.slice(2);
 const commands: Record<string, (argv: string[]) => Promise<void>> = {
   api,
   "claude-code": claudeCode,
+  "session-command": sessionCommand,
+  transcript,
   tasks: showTasks,
   tools: showTools,
 };
 const run = command ? commands[command] : undefined;
 if (!run) {
-  console.error("usage: npm run bench -- <api|claude-code|tasks|tools> [flags]");
+  console.error("usage: npm run bench -- <api|claude-code|session-command|transcript|tasks|tools> [flags]");
   process.exit(2);
 }
 run(rest).catch((err) => {
+  if (err instanceof CodeModeInactiveError || err instanceof TranscriptCodeModeError) {
+    console.error(`ERROR: ${err.message}`);
+    process.exit(4);
+  }
   console.error(err instanceof Error ? err.message : err);
   process.exit(1);
 });

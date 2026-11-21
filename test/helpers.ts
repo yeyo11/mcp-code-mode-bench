@@ -9,7 +9,9 @@ export const HERE = path.dirname(fileURLToPath(import.meta.url));
 /** Loads a recorded file, filling in the fixture-dependent values (T2's document id and count). */
 export function loadRecorded(name: string): string {
   const t2 = buildTasks().T2.expected as { document_id: string; open_comments: number };
+  const prompt = JSON.stringify(buildTasks().T2.prompt).slice(1, -1);
   return readFileSync(path.join(HERE, "recorded", name), "utf8")
+    .replace(/__PROMPT__/g, () => prompt)
     .replace(/__BUDGET_ID__/g, t2.document_id)
     .replace(/__OPEN__/g, String(t2.open_comments));
 }

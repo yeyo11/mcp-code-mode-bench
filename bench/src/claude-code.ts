@@ -39,8 +39,10 @@ export function mcpConfig(padding: number): object {
 /**
  * The exact command line. Notes:
  * - `--setting-sources ""` keeps the owner's user/project settings, hooks and plugins out of the run.
- * - Headless Claude Code (2.1.330) only honours Code Mode when the variable is set in the shell AND passed
- *   through `--settings` (flag settings); the shell variable alone is ignored under `-p`.
+ * - Code Mode is documented for interactive sessions only. Under `-p` (verified on 2.1.330) the REPL tool
+ *   does not appear, with the variable in the shell or in `--settings`, so mode E under `-p` is refused
+ *   by `runClaudeCodeTask` as soon as the init event lists no REPL. Measure E from an interactive
+ *   session's transcript instead (see docs/claude-code-code-mode.md and bench/src/transcript.ts).
  * - `--tools` must name REPL (the tool that runs Code Mode's JavaScript); D gets no built-in tools at all.
  */
 export function buildClaudeArgs(opts: Pick<CcRunOptions, "mode" | "task" | "model" | "effort">, mcpConfigPath: string): {
@@ -218,6 +220,30 @@ export function toRecord(opts: CcRunOptions, parsed: CcParsed, wallMs: number, s
   };
 }
 
+export class CodeModeInactiveError extends Error {
+  constructor(tools: string[]) {
+    super(
+      `Code Mode was requested but the init event lists no REPL tool (tools: ${tools.join(", ") || "none"}). ` +
+        "Claude Code does not run Code Mode under -p; measure mode E from an interactive session " +
+        "(docs/claude-code-code-mode.md). Run stopped before the model was asked anything.",
+    );
+  }
+}
+
+/** Returns the init event's tool list once it is in `out`, or undefined while it has not arrived. */
+export function initTools(out: string): string[] | undefined {
+  for (const line of out.split("\n")) {
+    if (!line.includes('"subtype":"init"')) continue;
+    try {
+      const e = JSON.parse(line) as StreamEvent;
+      if (e.type === "system" && e.subtype === "init") return Array.isArray(e.tools) ? (e.tools as string[]) : [];
+    } catch {
+      /* partial line */
+    }
+  }
+  return undefined;
+}
+
 export async function runClaudeCodeTask(opts: CcRunOptions): Promise<{ record: RunRecord; stdout: string; stderr: string }> {
   const dir = mkdtempSync(path.join(tmpdir(), "mcp-code-mode-bench-"));
   const configPath = path.join(dir, "mcp.json");
@@ -226,6 +252,7 @@ export async function runClaudeCodeTask(opts: CcRunOptions): Promise<{ record: R
 
   const startedAt = new Date();
   const started = Date.now();
+  let inactive: CodeModeInactiveError | undefined;
   const { stdout, stderr, code } = await new Promise<{ stdout: string; stderr: string; code: number | null }>((resolve) => {
     const child = spawn(opts.claudeBin ?? "claude", args, {
       cwd: dir, // an empty folder: no CLAUDE.md, no git repository
@@ -234,7 +261,19 @@ export async function runClaudeCodeTask(opts: CcRunOptions): Promise<{ record: R
     });
     let out = "";
     let err = "";
-    child.stdout.on("data", (d) => (out += d));
+    let checked = opts.mode !== "E";
+    child.stdout.on("data", (d) => {
+      out += d;
+      if (checked) return;
+      const tools = initTools(out);
+      if (tools === undefined) return;
+      checked = true;
+      // Fail loudly, and early: without REPL this would silently be a second classic run.
+      if (!tools.includes("REPL")) {
+        inactive = new CodeModeInactiveError(tools);
+        child.kill("SIGTERM");
+      }
+    });
     child.stderr.on("data", (d) => (err += d));
     const timer = setTimeout(() => child.kill("SIGTERM"), opts.timeoutMs ?? 15 * 60_000);
     child.on("close", (c) => {
@@ -244,6 +283,7 @@ export async function runClaudeCodeTask(opts: CcRunOptions): Promise<{ record: R
   });
   const wallMs = Date.now() - started;
   rmSync(dir, { recursive: true, force: true });
+  if (inactive) throw inactive;
 
   const parsed = parseStreamJson(stdout);
   const streamFile = saveStream(opts, stdout, dir);
