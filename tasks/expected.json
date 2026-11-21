@@ -1,0 +1,222 @@
+{
+  "T1": {
+    "id": "T1",
+    "title": "Multi-step: stale open comments across 20 documents",
+    "padding": 0,
+    "prompt": "Today is 2026-11-20. In every document of the Q4 planning folder (every document you can see through these tools is in that folder),\nfind the open comments that have had no reply for more than 7 days.\nA comment counts when it is open, not deleted, and the most recent reply in its thread (or the comment itself, if it has no replies)\nwas created before 2026-11-13T00:00:00Z. Group those comments by document and count them per comment author.\nEnd your answer with exactly one fenced ```json code block holding the answer in this shape, and nothing after it:\n{\"by_document\": {\"<document id>\": [\"<comment id>\", \"...\"]}, \"by_author\": {\"<comment author email>\": <number of such comments>}}\nList only documents that have at least one such comment.",
+    "expected": {
+      "by_document": {
+        "1korNm9kzGp2Ic_QgUa2wICg9cuZzPGQi9pfDYlrO_2t": [
+          "AAAB865nnLA",
+          "AAAB9LT2bQ0",
+          "AAABBwbR3wW",
+          "AAABDULOdJ4",
+          "AAABGzH1nT4",
+          "AAABM1j3SZ9",
+          "AAABW68KVMK",
+          "AAABdm5cy2w",
+          "AAABgGJ7BCn",
+          "AAABzb4A5X1"
+        ],
+        "1F1pQZJJxFE7qXHo6CxDa1Ci-NK_8gNFLjd3Xj-Opg_M": [
+          "AAAB8thY7Xs",
+          "AAABA8QONvh",
+          "AAABBhQ0LZN",
+          "AAABHgujxRb",
+          "AAABLy77swS",
+          "AAABY59fc8W",
+          "AAABum72Jc0"
+        ],
+        "1magZVR75HTbNFJR-qTgRSZeiRYiT1zCD38dKR3sTxKm": [
+          "AAAB1YiO4aQ",
+          "AAAB4iRvvdT",
+          "AAABb1v9yOb",
+          "AAABgKe4Eu6",
+          "AAABlEIqfpT",
+          "AAABmKzK9dA",
+          "AAABunZOkpe",
+          "AAABvMzZXF3"
+        ],
+        "1wAiS0nXrVFt58uxD0VST9AWsGgl-1vYRpa8Ltn6uQ-_": [
+          "AAAB5Omd2YS",
+          "AAABGqzmw6q",
+          "AAABOS2sgth",
+          "AAABRx0F42p",
+          "AAABWrrNApT",
+          "AAABXmRZl3L",
+          "AAABrO3FsN9"
+        ],
+        "1nMz8qx20BZolFOMyPdWTBLHjcvS6Qtfn3_H6wF_P9pv": [
+          "AAAB0H6OAcP",
+          "AAAB3Hp9hMr",
+          "AAABA441cds",
+          "AAABHThpGKL",
+          "AAABU8hGc48",
+          "AAABkxbmb6K",
+          "AAABzYqw7ES"
+        ],
+        "1ucEN2fXyElxIvwXOxtA2JaWg2VxkH8HC9vH1Ngg6IXS": [
+          "AAAB350kvVl",
+          "AAAB47EScOs",
+          "AAABVGmeVba",
+          "AAABj7pVXiA",
+          "AAABz5Pp9iC"
+        ],
+        "11OHmJdhV35ZDBAmpypnRCLfHrUuRTnVeJkJWd0P4Nxs": [
+          "AAAB31jWNg6",
+          "AAAB92CxJmw",
+          "AAAB9GChaB9",
+          "AAABFfq6Sb4",
+          "AAABFqF7lIk",
+          "AAABRHnGMgH",
+          "AAABTOCcEd8",
+          "AAABfjEYXzy"
+        ],
+        "1drirVltRJ1Nt-aEVOrz-lo0c9gjtjvh4DVit8LvxrGj": [
+          "AAAB9AozmLw",
+          "AAABAypUexS",
+          "AAABBonJCIT",
+          "AAABMODN07v",
+          "AAABaBavg6y",
+          "AAABh28x9SW",
+          "AAABygkt72N"
+        ],
+        "1Lf7NdPcR4uDZt3S6xP9s_JQrQLtYiY4rjuEuvgh5vC2": [
+          "AAAB26nmFIz",
+          "AAABVsokJtd",
+          "AAABXMVBdKi",
+          "AAABsfPIziK"
+        ],
+        "1xQ8ec1vMhrVErKCM7Fbuw_Pim-fGL9VBMEC-BO1jPsB": [
+          "AAABQpE2AR5",
+          "AAABSmb6tD9",
+          "AAABVgphqBY",
+          "AAABZqaPoES",
+          "AAABmKcpbtv",
+          "AAABmvgpRNO",
+          "AAABoBvxstV",
+          "AAABtyXztBt",
+          "AAABuv09QjV"
+        ],
+        "1aYaaLEs15hE7CHloR7JBj7TjLLNSlUIUJlXEfUmYca-": [
+          "AAABBG215sk",
+          "AAABH9XuFwW",
+          "AAABa1aWbSz",
+          "AAABbShmUlV",
+          "AAABgawxDYU"
+        ],
+        "1VtVPDEbSQLrg_9y2KPtBG7eVodTwifdk6Sf2D6CPD3_": [
+          "AAABBEAW46N",
+          "AAABEVDeyRG",
+          "AAABGiyK5ES",
+          "AAABNtKRzn9",
+          "AAABPAhbFt1",
+          "AAABVhAnIUJ",
+          "AAABdkqCNKK",
+          "AAABh5tmdjW",
+          "AAABk1RPGbx",
+          "AAAByvVGq1h"
+        ],
+        "1FVqbMWMHIszvmULIxC7gDiinfCUv2n07zRAEwgggdDj": [
+          "AAABDtvFw55",
+          "AAABJJPRZLR",
+          "AAABLfGEC0n",
+          "AAABOGv9N6I",
+          "AAABcxYNNh1",
+          "AAABoxQxdEP",
+          "AAABqqz7oiK"
+        ],
+        "1pHmK-Ae4UyFXX5vxLaf0R77UJGJjLEv5HtH4US9iQ60": [
+          "AAAB5Aj3d72",
+          "AAABXebmjOf",
+          "AAABY75nZH1",
+          "AAABls3OL8m",
+          "AAABpHEw8Do"
+        ],
+        "18wiAw_o59eQnGu-lMpWd9k1_hHyVA1iR3CEpEjIXRyV": [
+          "AAAB0vUiRFJ",
+          "AAAB4iZwv2C",
+          "AAABJ6GLgqR",
+          "AAABQJZqXwc",
+          "AAABV9jOKTz",
+          "AAABrsN2kgK",
+          "AAABw8bUoSm",
+          "AAABxOH1Rg0",
+          "AAAByADZxaF"
+        ],
+        "1HTk_rj_3dlNz4zsSk2m1tKZUqBWF55s03aqwH4wcXzL": [
+          "AAABA4HFwCt",
+          "AAABMlcpdHx",
+          "AAABOz8tPHx",
+          "AAABSnoK7El",
+          "AAABT0tfIMp",
+          "AAABTuuy8Rh",
+          "AAABWgnEVm9",
+          "AAABjUXuqML",
+          "AAABpiZIvD8",
+          "AAABxAsLyDB"
+        ],
+        "1ckSsWugIk1EUu3W0HEHZiefJ3sr2w0lWr3_sBZC1SVA": [
+          "AAAB6H0aSsq",
+          "AAAB6uKZPS5",
+          "AAABWNHCh0T",
+          "AAABhOGTPlX",
+          "AAABpkza9VJ"
+        ],
+        "1jhq93nPtm1g9Y7oDgUgc-YbSjOqXI1qk4pelndwstRW": [
+          "AAAB7qtAfoL",
+          "AAABJCKnPCb",
+          "AAABg9itoW9",
+          "AAABj9N4vj0"
+        ],
+        "1AgCrZTVpGUJVR4vqtFHSaNhNaSKOdEMQIoSy6lvUua7": [
+          "AAAB2TQPn84",
+          "AAABUDtMgdt",
+          "AAABV7b6f4r",
+          "AAABbqgdnco",
+          "AAABn4K9h3I",
+          "AAABoQpb69b"
+        ],
+        "1d5ujljL1STUNfMrgwPRg-DsUAW1ySFTkpNLaw_CV-8m": [
+          "AAAB5diKuhT",
+          "AAAB6Kl4Uu0",
+          "AAABBuaoe5t",
+          "AAABKSrF09K",
+          "AAABca8cp3F",
+          "AAABkcwDoQc"
+        ]
+      },
+      "by_author": {
+        "priya.raman@harbor-analytics.example": 31,
+        "alex.moreno@harbor-analytics.example": 11,
+        "tomas.varga@harbor-analytics.example": 22,
+        "lucas.brandt@harbor-analytics.example": 15,
+        "hana.okafor@harbor-analytics.example": 16,
+        "grace.mbeki@harbor-analytics.example": 6,
+        "daniel.kowalski@harbor-analytics.example": 7,
+        "mei.ito@harbor-analytics.example": 19,
+        "sofia.laurent@harbor-analytics.example": 12
+      }
+    }
+  },
+  "T2": {
+    "id": "T2",
+    "title": "Single call: open comments of one document (control)",
+    "padding": 0,
+    "prompt": "How many open comments does the Budget 2027 document have? Count open comments that are not deleted.\nEnd your answer with exactly one fenced ```json code block holding the answer in this shape, and nothing after it:\n{\"document_id\": \"<document id>\", \"open_comments\": <number>}",
+    "expected": {
+      "document_id": "1korNm9kzGp2Ic_QgUa2wICg9cuZzPGQi9pfDYlrO_2t",
+      "open_comments": 13
+    }
+  },
+  "T3": {
+    "id": "T3",
+    "title": "T2 with 200 filler tools in the catalogue",
+    "padding": 200,
+    "prompt": "How many open comments does the Budget 2027 document have? Count open comments that are not deleted.\nEnd your answer with exactly one fenced ```json code block holding the answer in this shape, and nothing after it:\n{\"document_id\": \"<document id>\", \"open_comments\": <number>}",
+    "expected": {
+      "document_id": "1korNm9kzGp2Ic_QgUa2wICg9cuZzPGQi9pfDYlrO_2t",
+      "open_comments": 13
+    }
+  }
+}
