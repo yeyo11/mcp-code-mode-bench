@@ -15,6 +15,7 @@ _No benchmark runs yet._
 | Task | Mode | Model | Cache | Runs | Correct | Input tokens (all) | of which cache reads | Output tokens | Requests | Wall time | Cost |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | T2 | D. Claude Code, classic | claude-sonnet-5-5 | warm | 1 | 1/1 | 30,054 | 20,522 | 503 | 4 | 8.5 s | $0.0452 * |
-| T2 | E. Claude Code, Code Mode | claude-sonnet-5-5 | warm | 1 | 1/1 | 81,349 | 73,341 | 713 | 4 | 13.1 s | $0.0465 * |
 
-- T2 mode E, batch `2026-11-21-claude-code-T2`: REPL calls visible in the stream = 0. Recorded by an earlier runner build that did not save the stream; fields renamed afterwards (code_mode_used -> repl_calls_visible). Whether Code Mode actually ran in mode E is not verified by this run: no REPL block is visible, but E used 7 turns vs 4 and 2.7x the input tokens of D.
+## Invalid runs (left out of every table)
+
+- T2 mode E rep 1 (smoke), batch `2026-11-21-claude-code-T2`: INVALID as a mode E run: Code Mode was not active. The init event listed no REPL tool (tools_at_init), so this was a second classic run. Claude Code does not run Code Mode under -p (confirmed separately on 2.1.330); the runner now refuses this case, and mode E is measured from interactive transcripts. Fields renamed afterwards (code_mode_used -> repl_calls_visible).
