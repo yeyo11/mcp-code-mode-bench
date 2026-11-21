@@ -1,0 +1,31 @@
+{
+  "_note": "Hand-written classic tool-use responses (direct calls) for the loop tests.",
+  "responses": [
+    {
+      "id": "msg_a_1", "type": "message", "role": "assistant", "model": "claude-sonnet-5-5",
+      "content": [
+        { "type": "text", "text": "Let me find the document." },
+        { "type": "tool_use", "id": "toolu_a1", "name": "list_documents", "input": { "query": "Budget 2027" }, "caller": { "type": "direct" } }
+      ],
+      "container": null, "stop_reason": "tool_use", "stop_sequence": null,
+      "usage": { "input_tokens": 12, "output_tokens": 70, "cache_creation_input_tokens": 200, "cache_read_input_tokens": 2400,
+                 "cache_creation": { "ephemeral_5m_input_tokens": 200, "ephemeral_1h_input_tokens": 0 } }
+    },
+    {
+      "id": "msg_a_2", "type": "message", "role": "assistant", "model": "claude-sonnet-5-5",
+      "content": [
+        { "type": "tool_use", "id": "toolu_a2", "name": "list_comments", "input": { "document": "__BUDGET_ID__", "status": "open" }, "caller": { "type": "direct" } }
+      ],
+      "container": null, "stop_reason": "tool_use", "stop_sequence": null,
+      "usage": { "input_tokens": 8, "output_tokens": 60, "cache_creation_input_tokens": 600, "cache_read_input_tokens": 2600 }
+    },
+    {
+      "id": "msg_a_3", "type": "message", "role": "assistant", "model": "claude-sonnet-5-5",
+      "content": [
+        { "type": "text", "text": "```json\n{\"document_id\": \"__BUDGET_ID__\", \"open_comments\": __OPEN__}\n```" }
+      ],
+      "container": null, "stop_reason": "end_turn", "stop_sequence": null,
+      "usage": { "input_tokens": 10, "output_tokens": 40, "cache_creation_input_tokens": 5000, "cache_read_input_tokens": 3200 }
+    }
+  ]
+}
