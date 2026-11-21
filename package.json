@@ -16,12 +16,12 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "npm run build && tsx --test test/*.test.ts",
+    "test": "tsc && tsx --test test/*.test.ts",
     "fixtures": "tsx server/src/write-fixtures.ts",
     "server": "node dist/server/src/index.js",
+    "prebench": "tsc",
     "bench": "node dist/bench/src/cli.js",
-    "bench:api": "node dist/bench/src/cli.js api",
-    "bench:cc": "node dist/bench/src/cli.js claude-code",
+    "prereport": "tsc",
     "report": "node dist/bench/src/report.js"
   },
   "dependencies": {
