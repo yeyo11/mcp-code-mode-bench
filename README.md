@@ -52,7 +52,7 @@ match.
 | B. Classic + tool search | Claude API | `tool_search_tool_bm25_20251119`; every tool `defer_loading: true` except `list_documents` |
 | C. Programmatic tool calling | Claude API | `code_execution_20260120` + `allowed_callers` on every tool |
 | D. Claude Code, classic | `claude -p` | What most people use daily |
-| E. Claude Code, Code Mode | `claude -p` + `CLAUDE_CODE_EXPERIMENTAL_CODE_MODE=1` | Experimental |
+| E. Claude Code, Code Mode | Interactive session with `CLAUDE_CODE_EXPERIMENTAL_CODE_MODE=1`, measured from its transcript | Experimental; does not run under `-p` |
 
 Same model, same effort (`medium`) and same prompt in every mode. Prompt caching (automatic, 5-minute
 TTL) is on in modes A-C, as any real agent would use it.
@@ -82,7 +82,8 @@ npm run bench -- api --mode A
 npm run bench -- api --mode B
 npm run bench -- api --mode C
 npm run bench -- claude-code --mode D
-npm run bench -- claude-code --mode E
+npm run bench -- session-command --mode E --task T1    # mode E is interactive: see docs/claude-code-code-mode.md
+npm run bench -- transcript --latest --mode E --task T1 --rep 1
 
 # Or all API modes interleaved in one run, which is fairer (drift over time hits every mode alike)
 npm run bench -- api --mode A,B,C --task T1,T2,T3 --reps 5 --cap 9
@@ -99,8 +100,8 @@ default). `--spent` adds what earlier invocations already spent. Other flags: `-
 
 _Placeholder: the final runs are not in yet._ The generated table lives in
 [`results/results.md`](results/results.md): median (min–max) per task × mode, cold and warm cache in
-separate rows. The only runs so far are a Claude Code smoke test of modes D and E on T2, listed there
-apart from the results.
+separate rows. The only run so far is a Claude Code smoke test of mode D on T2, listed there apart
+from the results (the mode E smoke run turned out to run without Code Mode and is listed as invalid).
 
 ## Caveats
 
@@ -120,13 +121,12 @@ apart from the results.
 - **Claude Code's numbers are its own.** `total_cost_usd` is Claude Code's client-side estimate; on a
   subscription nothing is billed per run. Its system prompt is not the API harness's, so compare D
   with E, not D with A.
-- **Claude Code Code Mode under `-p` is not documented.** The docs list an interactive terminal as a
-  requirement. In v2.1.330, headless runs honour it only when the variable is set in the shell and
-  also passed through `--settings`, which is what the runner does; `--tools` must name `REPL`. In Code
-  Mode the transcript shows the inner MCP calls rather than the code, so a run cannot always prove from
-  its stream that Code Mode ran. The runner saves each stream (local paths redacted) under
-  `results/raw/streams/` and records the first request's prompt size, which grows with Code Mode's
-  tool definitions.
+- **Claude Code Code Mode does not run under `-p`.** The docs require an interactive terminal and a
+  one-time opt-in, and under `claude -p` (v2.1.330) the `REPL` tool never appears. The headless runner
+  therefore refuses mode E (it stops at Claude Code's init event and exits with code 4), and mode E is
+  measured from interactive transcripts with the manual steps in
+  [`docs/claude-code-code-mode.md`](docs/claude-code-code-mode.md). A mode E record without a `REPL`
+  call is reported as invalid, never as Code Mode.
 - **Claude Code isolation.** Runs use `--strict-mcp-config`, `--setting-sources ""` (no user hooks,
   plugins or settings), an empty working folder, and only the mock server's tools (plus `REPL` in E).
   Claude Code may also trim or spill very large MCP results; that is recorded, not hidden.
