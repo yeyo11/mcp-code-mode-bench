@@ -70,9 +70,19 @@ export function renderTable(records: RunRecord[]): string {
   ].join("\n");
 }
 
+/** A mode E run without Code Mode active is a classic run in disguise: never shown as E. */
+export function isInvalid(r: RunRecord): boolean {
+  if (r.mode !== "E") return false;
+  if (r.extra?.code_mode_active === false) return true;
+  const tools = r.extra?.tools_at_init;
+  return Array.isArray(tools) && !tools.includes("REPL") && r.extra?.source !== "interactive-transcript";
+}
+
 export function renderReport(records: RunRecord[], now = new Date()): string {
-  const real = records.filter((r) => !r.smoke);
-  const smoke = records.filter((r) => r.smoke);
+  const invalid = records.filter(isInvalid);
+  const valid = records.filter((r) => !isInvalid(r));
+  const real = valid.filter((r) => !r.smoke);
+  const smoke = valid.filter((r) => r.smoke);
   const parts = [
     "# Results",
     "",
@@ -88,13 +98,11 @@ export function renderReport(records: RunRecord[], now = new Date()): string {
   parts.push(real.length ? renderTable(real) : "_No benchmark runs yet._");
   if (smoke.length) {
     parts.push("", "## Smoke runs (plumbing checks, not results)", "", renderTable(smoke));
-    const cc = smoke.filter((r) => r.mode === "E");
-    for (const r of cc) {
-      parts.push(
-        "",
-        `- ${r.task} mode E, batch \`${r.batch_id}\`: REPL calls visible in the stream = ${String(r.extra?.repl_calls_visible ?? 0)}` +
-          (r.extra?.note ? `. ${String(r.extra.note)}` : "."),
-      );
+  }
+  if (invalid.length) {
+    parts.push("", "## Invalid runs (left out of every table)", "");
+    for (const r of invalid) {
+      parts.push(`- ${r.task} mode ${r.mode} rep ${r.rep}${r.smoke ? " (smoke)" : ""}, batch \`${r.batch_id}\`: ${String(r.extra?.note ?? "Code Mode requested but not active.")}`);
     }
   }
   const failures = real.filter((r) => r.error);

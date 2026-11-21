@@ -33,3 +33,13 @@ test("report keeps cold and warm apart and smoke runs out of the table", () => {
   assert.doesNotMatch(main!, /Claude Code, Code Mode/);
   assert.match(smoke!, /Claude Code, Code Mode/);
 });
+
+test("a mode E run without Code Mode is reported as invalid, never as E", () => {
+  const md = renderReport([
+    rec({ mode: "E", harness: "claude-code", smoke: true, extra: { code_mode_active: false, note: "no REPL" } }),
+    rec({ mode: "E", harness: "claude-code", extra: { tools_at_init: ["mcp__gdocs__list_comments"] } }),
+  ]);
+  assert.doesNotMatch(md, /\| E\. Claude Code, Code Mode/);
+  assert.match(md, /## Invalid runs/);
+  assert.match(md, /no REPL/);
+});
